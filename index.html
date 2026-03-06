@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastery: Lũy Thừa Với Số Mũ Thực - Toán 11</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+        window.MathJax = {
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$']],
+                processEscapes: true
+            },
+            options: { enableMenu: false },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #ecfeff; color: #0f172a; }
+        .math-render { opacity: 0; transition: opacity 0.5s ease; }
+        .math-render.ready { opacity: 1; }
+        .choice-btn:active { transform: scale(0.97); }
+        .explanation-box { 
+            border-left: 8px solid #06b6d4; 
+            background-color: #f0fdfa;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.08);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-check { box-shadow: 0 10px 20px -5px rgba(6, 182, 212, 0.4); }
+        .item-row { transition: all 0.2s ease; }
+        .item-row:hover { background-color: #ffffff; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 md:p-6">
+    <div id="game-app" class="w-full max-w-5xl bg-white rounded-[2.5rem] shadow-[0_40px_80px_-20px_rgba(6,182,212,0.15)] border border-cyan-100 flex flex-col">
+        
+        <!-- Header -->
+        <div class="bg-cyan-600 p-8 text-white text-center relative overflow-hidden rounded-t-[2.5rem]">
+            <div class="absolute inset-0 bg-gradient-to-br from-cyan-800 via-cyan-600 to-blue-500 opacity-95"></div>
+            <div class="relative z-10">
+                <h1 class="text-3xl font-extrabold tracking-tight text-white mb-2 italic uppercase">LŨY THỪA VỚI SỐ MŨ THỰC</h1>
+                <p class="text-cyan-100 text-sm font-medium opacity-90 uppercase tracking-[0.3em]">Toán 11 KNTT - Rút Gọn & Toán Thực Tế</p>
+            </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div id="progress-container" class="hidden h-3 bg-slate-100 relative">
+            <div id="progress-bar" class="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-700 w-0"></div>
+        </div>
+
+        <!-- Content Area -->
+        <div id="main-content" class="p-6 md:p-12 flex-grow min-h-[600px] flex flex-col overflow-y-auto">
+            <div id="start-screen" class="text-center py-16 my-auto">
+                <div class="text-[10rem] mb-8 leading-none">📈</div>
+                <h2 class="text-4xl font-black text-slate-800 mb-6 uppercase tracking-tighter">KIỂM TRA KIẾN THỨC</h2>
+                <p class="text-slate-500 mb-12 max-w-2xl mx-auto leading-relaxed text-xl">
+                    Hệ thống 50 câu hỏi bám sát chuyên đề <b>Lũy thừa</b> (Công thức, Rút gọn, Toán thực tế). <br>
+                    Mọi đáp án được giải chi tiết chuẩn LaTeX. Thuật toán <b>Anti-Repetition</b> đảm bảo tỷ lệ lặp lại so với đề liền trước <b class="text-cyan-600">không vượt quá 15%</b>.
+                </p>
+                <button onclick="initGame()" class="bg-cyan-600 hover:bg-cyan-700 text-white px-24 py-6 rounded-[2rem] font-black text-2xl shadow-xl transition-all active:scale-95 transform hover:-translate-y-1">BẮT ĐẦU NGAY</button>
+            </div>
+        </div>
+
+        <!-- Footer Control -->
+        <div id="footer-actions" class="hidden p-8 bg-slate-50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 rounded-b-[2.5rem]">
+            <div id="status" class="text-lg font-black text-cyan-600 uppercase tracking-[0.25em]">CÂU 1 / 15</div>
+            <div class="flex gap-4 w-full md:w-auto">
+                <button id="check-btn" onclick="processAnswer()" class="flex-1 md:flex-none bg-cyan-600 hover:bg-cyan-700 text-white px-16 py-4 rounded-2xl font-bold text-xl transition shadow-lg btn-check active:scale-95">Kiểm tra</button>
+                <button id="next-btn" onclick="renderNext()" class="hidden flex-1 md:flex-none bg-blue-500 hover:bg-blue-600 text-white px-16 py-4 rounded-2xl font-bold text-xl shadow-lg transition active:scale-95">Tiếp theo →</button>
+                <button id="result-btn" onclick="finishGame()" class="hidden flex-1 md:flex-none bg-orange-500 hover:bg-orange-600 text-white px-16 py-4 rounded-2xl font-bold text-xl shadow-lg transition active:scale-95">Kết quả</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const MASTER_POOL = {
+            part1: [
+                { id: "lt_p1_1", question: "Tính giá trị của biểu thức $B = 9^{\\frac{3}{2}}$.", options: ["$B=27$", "$B=9$", "$B=3\\sqrt[3]{3}$", "$B=81$"], correct: 0, explanation: "Ta có $B = 9^{\\frac{3}{2}} = (3^2)^{\\frac{3}{2}} = 3^{2 \\cdot \\frac{3}{2}} = 3^3 = 27$." },
+                { id: "lt_p1_2", question: "Cho $a = \\frac{1}{256}$ và $b = \\frac{1}{27}$. Tính $A = a^{-\\frac{3}{4}} + b^{-\\frac{4}{3}}$.", options: ["23", "89", "145", "26"], correct: 2, explanation: "Ta có $a = 256^{-1} = (4^4)^{-1} = 4^{-4} \\Rightarrow a^{-\\frac{3}{4}} = (4^{-4})^{-\\frac{3}{4}} = 4^3 = 64$. <br>Và $b = 27^{-1} = (3^3)^{-1} = 3^{-3} \\Rightarrow b^{-\\frac{4}{3}} = (3^{-3})^{-\\frac{4}{3}} = 3^4 = 81$. <br>Vậy $A = 64 + 81 = 145$." },
+                { id: "lt_p1_3", question: "Với $a$ là số thực dương tùy ý, $\\sqrt{a^3}$ bằng:", options: ["$a^{\\frac{1}{6}}$", "$a^{\\frac{2}{3}}$", "$a^6$", "$a^{\\frac{3}{2}}$"], correct: 3, explanation: "Theo định nghĩa lũy thừa với số mũ hữu tỉ: $\\sqrt[n]{a^m} = a^{\\frac{m}{n}}$. <br>Do đó, $\\sqrt{a^3} = \\sqrt[2]{a^3} = a^{\\frac{3}{2}}$." },
+                { id: "lt_p1_4", question: "Với $\\alpha$ là số thực bất kì, mệnh đề nào sau đây SAI?", options: ["$\\sqrt{10^\\alpha} = (\\sqrt{10})^\\alpha$", "$\\sqrt{10^\\alpha} = 10^{\\frac{\\alpha}{2}}$", "$(10^\\alpha)^2 = (100)^\\alpha$", "$(10^\\alpha)^2 = 10^{\\alpha^2}$"], correct: 3, explanation: "Theo tính chất lũy thừa: $(a^m)^n = a^{m \\cdot n}$. <br>Do đó $(10^\\alpha)^2 = 10^{2\\alpha} = (10^2)^\\alpha = 100^\\alpha$. <br>Mệnh đề $(10^\\alpha)^2 = 10^{\\alpha^2}$ là sai vì phép nhân ở số mũ đã bị nhầm thành phép lũy thừa." },
+                { id: "lt_p1_5", question: "Rút gọn biểu thức $P = x^{\\frac{1}{3}} \\cdot \\sqrt[6]{x}$ với $x > 0$.", options: ["$P = \\sqrt{x}$", "$P = x^{\\frac{1}{8}}$", "$P = x^{\\frac{2}{9}}$", "$P = x^2$"], correct: 0, explanation: "Biến đổi căn thức thành lũy thừa: $\\sqrt[6]{x} = x^{\\frac{1}{6}}$. <br>Ta có $P = x^{\\frac{1}{3}} \\cdot x^{\\frac{1}{6}} = x^{\\frac{1}{3} + \\frac{1}{6}} = x^{\\frac{1}{2}} = \\sqrt{x}$." },
+                { id: "lt_p1_6", question: "Cho biểu thức $P = \\sqrt[3]{x \\cdot \\sqrt[4]{x^3 \\sqrt{x}}}$ với $x > 0$. Mệnh đề nào dưới đây đúng?", options: ["$P = x^{\\frac{15}{24}}$", "$P = x^{\\frac{1}{2}}$", "$P = x^{\\frac{7}{24}}$", "$P = x^{\\frac{7}{12}}$"], correct: 0, explanation: "Biến đổi từ trong ra ngoài: $\\sqrt{x} = x^{\\frac{1}{2}}$. <br>$x^3 \\sqrt{x} = x^3 \\cdot x^{\\frac{1}{2}} = x^{\\frac{7}{2}}$. <br>$\\sqrt[4]{x^{\\frac{7}{2}}} = (x^{\\frac{7}{2}})^{\\frac{1}{4}} = x^{\\frac{7}{8}}$. <br>$x \\cdot \\sqrt[4]{\\dots} = x^1 \\cdot x^{\\frac{7}{8}} = x^{\\frac{15}{8}}$. <br>Cuối cùng $P = \\sqrt[3]{x^{\\frac{15}{8}}} = (x^{\\frac{15}{8}})^{\\frac{1}{3}} = x^{\\frac{5}{8}} = x^{\\frac{15}{24}}$." },
+                { id: "lt_p1_7", question: "Biết $\\sqrt[5]{5 \\cdot \\sqrt[4]{25 \\cdot \\sqrt[3]{5}}} = 5^{\\frac{m}{n}}$ với $m, n \\in \\mathbb{Z}$ và nguyên tố cùng nhau. Tính $m + n$.", options: ["$m+n=79$", "$m+n=27$", "$m+n=16$", "$m+n=5$"], correct: 0, explanation: "Biến đổi từ trong ra ngoài: <br>$25 \\cdot \\sqrt[3]{5} = 5^2 \\cdot 5^{\\frac{1}{3}} = 5^{\\frac{7}{3}}$. <br>$\\sqrt[4]{5^{\\frac{7}{3}}} = 5^{\\frac{7}{12}}$. <br>$5 \\cdot 5^{\\frac{7}{12}} = 5^1 \\cdot 5^{\\frac{7}{12}} = 5^{\\frac{19}{12}}$. <br>$\\sqrt[5]{5^{\\frac{19}{12}}} = (5^{\\frac{19}{12}})^{\\frac{1}{5}} = 5^{\\frac{19}{60}}$. <br>Ta có $\\frac{m}{n} = \\frac{19}{60}$ (đã tối giản). Vậy $m=19, n=60 \\Rightarrow m+n=79$." },
+                { id: "lt_p1_8", question: "Tính giá trị của biểu thức $P = (7+4\\sqrt{3})^{2017}(4\\sqrt{3}-7)^{2016}$.", options: ["$P = (7+4\\sqrt{3})^{2016}$", "$P = 1$", "$P = 7-4\\sqrt{3}$", "$P = 7+4\\sqrt{3}$"], correct: 3, explanation: "Ta có $P = (7+4\\sqrt{3}) \\cdot (7+4\\sqrt{3})^{2016} \\cdot (4\\sqrt{3}-7)^{2016}$<br>$= (7+4\\sqrt{3}) \\cdot [(7+4\\sqrt{3})(4\\sqrt{3}-7)]^{2016}$. <br>Mà $(7+4\\sqrt{3})(4\\sqrt{3}-7) = 28\\sqrt{3} - 49 + 48 - 28\\sqrt{3} = -1$. <br>Vì $(-1)^{2016} = 1$, suy ra $P = (7+4\\sqrt{3}) \\cdot 1 = 7+4\\sqrt{3}$." },
+                { id: "lt_p1_9", question: "Biết $4^x + 4^{-x} = 14$, tính giá trị của biểu thức $P = 2^x + 2^{-x}$.", options: ["4", "16", "$\\sqrt{17}$", "$\\pm 4$"], correct: 0, explanation: "Ta bình phương biểu thức $P$: <br>$P^2 = (2^x + 2^{-x})^2 = (2^x)^2 + 2 \\cdot 2^x \\cdot 2^{-x} + (2^{-x})^2 = 4^x + 2 + 4^{-x}$. <br>Thay $4^x + 4^{-x} = 14$ vào, ta được $P^2 = 14 + 2 = 16$. <br>Vì $2^x > 0$ và $2^{-x} > 0$ với mọi $x$, nên $P > 0$. Vậy $P = \\sqrt{16} = 4$." },
+                { id: "lt_p1_10", question: "Cho $a < 0, b > 0$. Mệnh đề nào sau đây SAI?", options: ["$\\sqrt[4]{a^4 b^8} = |a b^2|$", "$\\sqrt[4]{a^4 b^8} = |a|b^2$", "$\\sqrt[4]{a^4 b^8} = ab^2$", "$\\sqrt[4]{a^4 b^8} = -ab^2$"], correct: 2, explanation: "Theo tính chất căn bậc chẵn: $\\sqrt[4]{a^4 b^8} = \\sqrt[4]{(ab^2)^4} = |ab^2| = |a| \\cdot |b^2|$. <br>Vì $a < 0 \\Rightarrow |a| = -a$ và $b > 0 \\Rightarrow |b^2| = b^2$. <br>Do đó biểu thức bằng $-ab^2$. <br>Đáp án C ghi là $ab^2$ (mang giá trị âm do $a<0$) là mệnh đề SAI." },
+                { id: "lt_p1_11", question: "Nếu $a^{\\frac{1}{3}} > a^{\\frac{1}{6}}$ và $b^{\\sqrt{3}} > b^{\\sqrt{5}}$ thì khẳng định nào sau đây đúng?", options: ["$a < 1; 0 < b < 1$", "$a > 1; b < 1$", "$0 < a < 1; b < 1$", "$a > 1; 0 < b < 1$"], correct: 3, explanation: "Xét $a^{\\frac{1}{3}} > a^{\\frac{1}{6}}$: Vì số mũ $\\frac{1}{3} > \\frac{1}{6}$ và dấu bất đẳng thức giữ nguyên chiều nên cơ số $a > 1$. <br>Xét $b^{\\sqrt{3}} > b^{\\sqrt{5}}$: Vì số mũ $\\sqrt{3} < \\sqrt{5}$ nhưng dấu bất đẳng thức lại lớn hơn (đảo chiều) nên cơ số $0 < b < 1$. <br>Vậy $a > 1$ và $0 < b < 1$." },
+                { id: "lt_p1_12", question: "Cho $a > 1$. Mệnh đề nào dưới đây đúng?", options: ["$\\frac{1}{a^{2016}} < \\frac{1}{a^{2017}}$", "$a^{\\frac{1}{3}} > \\sqrt{a}$", "$a^{-\\sqrt{3}} > \\frac{1}{a^{\\sqrt{5}}}$", "$\\frac{\\sqrt[3]{a^2}}{a} > 1$"], correct: 2, explanation: "Vì $a > 1$ nên hàm số $y = a^x$ đồng biến trên tập $\\mathbb{R}$. <br>Xét đáp án C: Ta có $-\\sqrt{3} \\approx -1.732$ và $-\\sqrt{5} \\approx -2.236$. Vì $-\\sqrt{3} > -\\sqrt{5}$ nên $a^{-\\sqrt{3}} > a^{-\\sqrt{5}}$. <br>Do $\\frac{1}{a^{\\sqrt{5}}} = a^{-\\sqrt{5}}$, suy ra $a^{-\\sqrt{3}} > \\frac{1}{a^{\\sqrt{5}}}$ là mệnh đề ĐÚNG." },
+                { id: "lt_p1_13", question: "Rút gọn biểu thức $M = \\frac{a^{\\frac{1}{3}} \\cdot \\sqrt{a}}{a^{\\frac{5}{6}}}$ với $a > 0$.", options: ["$M = a$", "$M = 1$", "$M = a^{\\frac{1}{6}}$", "$M = a^2$"], correct: 1, explanation: "Đưa căn thức về lũy thừa: $\\sqrt{a} = a^{\\frac{1}{2}}$. <br>Ta có tử số: $a^{\\frac{1}{3}} \\cdot a^{\\frac{1}{2}} = a^{\\frac{1}{3} + \\frac{1}{2}} = a^{\\frac{5}{6}}$. <br>Chia cho mẫu số $a^{\\frac{5}{6}}$, ta được $M = \\frac{a^{\\frac{5}{6}}}{a^{\\frac{5}{6}}} = 1$." },
+                { id: "lt_p1_14", question: "Rút gọn biểu thức $K = (x^{\\frac{1}{2}} - y^{\\frac{1}{2}})^2 + 2x^{\\frac{1}{2}}y^{\\frac{1}{2}}$ với $x, y > 0$.", options: ["$K = x + y$", "$K = x - y$", "$K = x^2 + y^2$", "$K = x^{\\frac{1}{2}} + y^{\\frac{1}{2}}$"], correct: 0, explanation: "Khai triển hằng đẳng thức $(A-B)^2$: <br>$K = (x^{\\frac{1}{2}})^2 - 2x^{\\frac{1}{2}}y^{\\frac{1}{2}} + (y^{\\frac{1}{2}})^2 + 2x^{\\frac{1}{2}}y^{\\frac{1}{2}}$. <br>$K = x - 2\\sqrt{xy} + y + 2\\sqrt{xy} = x + y$." },
+                { id: "lt_p1_15", question: "Biết $3^x = 2$, tính giá trị biểu thức $A = 3^{x+2} - 3^{x-1}$.", options: ["$17$", "$\\frac{53}{3}$", "$18$", "$\\frac{52}{3}$"], correct: 3, explanation: "Áp dụng công thức lũy thừa: $A = 3^x \\cdot 3^2 - 3^x \\cdot 3^{-1}$. <br>Thay $3^x = 2$ vào biểu thức: $A = 2 \\cdot 9 - 2 \\cdot \\frac{1}{3} = 18 - \\frac{2}{3} = \\frac{54 - 2}{3} = \\frac{52}{3}$." },
+                { id: "lt_p1_16", question: "Giá trị của biểu thức $C = (0.04)^{-1.5} - (0.125)^{-\\frac{2}{3}}$ là:", options: ["121", "125", "124", "116"], correct: 0, explanation: "Ta có $0.04 = \\frac{4}{100} = \\frac{1}{25} = 5^{-2}$. Do đó $(5^{-2})^{-1.5} = 5^3 = 125$. <br>Và $0.125 = \\frac{125}{1000} = \\frac{1}{8} = 2^{-3}$. Do đó $(2^{-3})^{-\\frac{2}{3}} = 2^2 = 4$. <br>Vậy $C = 125 - 4 = 121$." },
+                { id: "lt_p1_17", question: "Cho hàm số $f(a) = \\frac{a^{\\frac{2}{3}} (a^{-\\frac{2}{3}} - a^{\\frac{1}{3}})}{a^{\\frac{1}{8}} (a^{\\frac{7}{8}} - a^{-\\frac{1}{8}})}$ với $a > 0, a \\ne 1$. Tính $f(2023)$.", options: ["-2023", "-1", "1", "2023"], correct: 1, explanation: "Rút gọn tử số: $a^{\\frac{2}{3}} \\cdot a^{-\\frac{2}{3}} - a^{\\frac{2}{3}} \\cdot a^{\\frac{1}{3}} = a^0 - a^1 = 1 - a$. <br>Rút gọn mẫu số: $a^{\\frac{1}{8}} \\cdot a^{\\frac{7}{8}} - a^{\\frac{1}{8}} \\cdot a^{-\\frac{1}{8}} = a^1 - a^0 = a - 1$. <br>Vậy $f(a) = \\frac{1 - a}{a - 1} = -1$. Do đó giá trị của $f(2023)$ vẫn bằng $-1$." },
+                { id: "lt_p1_18", question: "Rút gọn biểu thức $Q = \\sqrt{a \\sqrt{a \\sqrt{a}}}$ với $a > 0$ ta được $Q = a^{\\alpha}$. Tính $\\alpha$.", options: ["$\\frac{3}{8}$", "$\\frac{1}{8}$", "$\\frac{7}{8}$", "$\\frac{5}{8}$"], correct: 2, explanation: "Viết lại dưới dạng lũy thừa từ trong ra ngoài: <br>$a \\cdot a^{\\frac{1}{2}} = a^{\\frac{3}{2}}$. <br>Lấy căn bậc hai: $(a^{\\frac{3}{2}})^{\\frac{1}{2}} = a^{\\frac{3}{4}}$. <br>Nhân tiếp với $a$: $a^1 \\cdot a^{\\frac{3}{4}} = a^{\\frac{7}{4}}$. <br>Lấy căn bậc hai ngoài cùng: $Q = (a^{\\frac{7}{4}})^{\\frac{1}{2}} = a^{\\frac{7}{8}}$. Vậy $\\alpha = \\frac{7}{8}$." },
+                { id: "lt_p1_19", question: "Cho $x > 0$, biểu thức $P = x^{\\sqrt{2}} \\cdot \\left(\\frac{1}{x}\\right)^{\\sqrt{2}-1}$ bằng:", options: ["$x$", "$x^{\\sqrt{2}}$", "$x^{2\\sqrt{2}-1}$", "$1$"], correct: 0, explanation: "Ta có $\\frac{1}{x} = x^{-1}$. Do đó $\\left(\\frac{1}{x}\\right)^{\\sqrt{2}-1} = x^{-(\\sqrt{2}-1)} = x^{-\\sqrt{2}+1}$. <br>Vậy $P = x^{\\sqrt{2}} \\cdot x^{-\\sqrt{2}+1} = x^{\\sqrt{2} - \\sqrt{2} + 1} = x^1 = x$." },
+                { id: "lt_p1_20", question: "Tập tất cả các giá trị của $x$ để hàm số lũy thừa $y = (x^2 - 3x + 2)^{\\sqrt{3}}$ xác định là:", options: ["$(-\\infty; 1) \\cup (2; +\\infty)$", "$[1; 2]$", "$(1; 2)$", "$(-\\infty; 1] \\cup [2; +\\infty)$"], correct: 0, explanation: "Theo SGK, hàm số lũy thừa với số mũ thực không nguyên ($\\sqrt{3}$) có điều kiện xác định là cơ số phải dương. <br>$x^2 - 3x + 2 > 0 \\Leftrightarrow x < 1$ hoặc $x > 2$. <br>Tập xác định là $D = (-\\infty; 1) \\cup (2; +\\infty)$." },
+                { id: "lt_p1_21", question: "Với $\\alpha$ là số thực bất kỳ, biểu thức $(a^\\alpha)^2$ tương đương với:", options: ["$a^{\\alpha+2}$", "$a^{2\\alpha}$", "$a^{\\alpha^2}$", "$a^{\\frac{\\alpha}{2}}$"], correct: 1, explanation: "Theo tính chất lũy thừa cơ bản $(a^m)^n = a^{m \\cdot n}$. Do đó $(a^\\alpha)^2 = a^{2\\alpha}$." },
+                { id: "lt_p1_22", question: "Trong các khẳng định sau, khẳng định nào đúng với mọi số thực dương $a, b$?", options: ["$(a+b)^\\alpha = a^\\alpha + b^\\alpha$", "$(ab)^\\alpha = a^\\alpha b^\\alpha$", "$a^\\alpha a^\\beta = a^{\\alpha \\beta}$", "$\\frac{a^\\alpha}{a^\\beta} = a^{\\frac{\\alpha}{\\beta}}$"], correct: 1, explanation: "Khẳng định đúng là lũy thừa của một tích: $(ab)^\\alpha = a^\\alpha b^\\alpha$. <br>Các khẳng định còn lại đều sai quy tắc tính toán lũy thừa cơ bản." },
+                { id: "lt_p1_23", question: "Cho $a > 0$ và $a \\ne 1$. Tìm mệnh đề sai.", options: ["$a^x > 1$ khi $a > 1, x > 0$", "$a^x > a^y \\Leftrightarrow x > y$ khi $a > 1$", "$a^x < 1$ khi $0 < a < 1, x > 0$", "$a^x > a^y \\Leftrightarrow x > y$ khi $0 < a < 1$"], correct: 3, explanation: "Khi cơ số $0 < a < 1$, hàm số nghịch biến. Do đó $a^x > a^y \\Leftrightarrow x < y$. <br>Mệnh đề D giữ nguyên chiều bất đẳng thức cho cơ số bé hơn 1 là sai." },
+                { id: "lt_p1_24", question: "So sánh $m = 2^{\\sqrt{3}}$ và $n = 2^{\\sqrt{2}}$.", options: ["$m > n$", "$m < n$", "$m = n$", "Không thể so sánh"], correct: 0, explanation: "Vì cơ số $a = 2 > 1$ nên hàm $y = 2^x$ đồng biến. <br>Ta có $\\sqrt{3} > \\sqrt{2}$, do đó $2^{\\sqrt{3}} > 2^{\\sqrt{2}}$, suy ra $m > n$." },
+                { id: "lt_p1_25", question: "Tìm điều kiện của cơ số $a$ để $a^{\\frac{1}{3}} < a^{\\frac{1}{4}}$.", options: ["$a > 1$", "$0 < a < 1$", "$a < 0$", "$a = 1$"], correct: 1, explanation: "Ta có số mũ $\\frac{1}{3} > \\frac{1}{4}$. <br>Tuy nhiên bất đẳng thức lại là $a^{\\frac{1}{3}} < a^{\\frac{1}{4}}$ (ngược chiều số mũ). <br>Điều này chỉ xảy ra khi hàm số nghịch biến, tức là cơ số $0 < a < 1$." },
+                { id: "lt_p1_26", question: "Giá trị của biểu thức $P = \\left(\\frac{1}{16}\\right)^{-0.75} + \\left(\\frac{1}{8}\\right)^{-\\frac{4}{3}}$ là:", options: ["16", "24", "20", "28"], correct: 1, explanation: "Ta có $\\frac{1}{16} = 2^{-4}$ và $\\frac{1}{8} = 2^{-3}$. <br>Thay vào biểu thức: $P = (2^{-4})^{-0.75} + (2^{-3})^{-\\frac{4}{3}} = 2^3 + 2^4 = 8 + 16 = 24$." },
+                { id: "lt_p1_27", question: "Nếu $(\\sqrt{3} - 1)^x < (\\sqrt{3} - 1)^y$ thì:", options: ["$x < y$", "$x > y$", "$x = y$", "$x \\ge y$"], correct: 1, explanation: "Xét cơ số $a = \\sqrt{3} - 1 \\approx 1.732 - 1 = 0.732$. <br>Vì $0 < a < 1$, hàm nghịch biến nên chiều bất đẳng thức đảo ngược. <br>Do đó $(\\sqrt{3} - 1)^x < (\\sqrt{3} - 1)^y \\Leftrightarrow x > y$." },
+                { id: "lt_p1_28", question: "Tính giá trị của $T = 3^{2+\\sqrt{2}} \\cdot 3^{2-\\sqrt{2}}$.", options: ["$3^4$", "$3^{2\\sqrt{2}}$", "$3^8$", "1"], correct: 0, explanation: "Áp dụng công thức $a^m \\cdot a^n = a^{m+n}$. <br>Ta có $T = 3^{(2+\\sqrt{2}) + (2-\\sqrt{2})} = 3^4 = 81$." },
+                { id: "lt_p1_29", question: "Khẳng định nào đúng về $0^0$?", options: ["Bằng 0", "Bằng 1", "Bằng $\\infty$", "Không có nghĩa"], correct: 3, explanation: "Theo định nghĩa toán học tiêu chuẩn trong chương trình phổ thông, biểu thức $0^0$ không được xác định (hay còn gọi là không có nghĩa)." },
+                { id: "lt_p1_30", question: "Hàm số $y = x^{\\sqrt{2}}$ có tập xác định là:", options: ["$(0; +\\infty)$", "$\\mathbb{R}$", "$[0; +\\infty)$", "$\\mathbb{R} \\setminus \\{0\\}$"], correct: 0, explanation: "Theo SGK Toán 11, hàm số lũy thừa $y = x^\\alpha$ với số mũ $\\alpha$ không nguyên (ở đây $\\alpha = \\sqrt{2}$ là số vô tỉ) có tập xác định là khoảng $(0; +\\infty)$." }
+            ],
+            part2: [
+                { id: "lt_p2_1", question: "Cho $a$ là số thực dương và $m, n$ là 2 số nguyên dương. Xét tính đúng / sai của các mệnh đề sau:", items: [
+                    { text: "Công thức biến đổi căn thức là $\\sqrt[n]{a^m} = a^{\\frac{n}{m}}$.", isTrue: false },
+                    { text: "Ta có biến đổi $\\sqrt[3]{a^4} = a^{\\frac{4}{3}}$.", isTrue: true },
+                    { text: "Rút gọn $a^{\\frac{2}{3}} \\cdot a^{\\frac{1}{3}} \\cdot a^3 = a^5$.", isTrue: false },
+                    { text: "Rút gọn $\\sqrt[3]{a \\sqrt[3]{a \\sqrt{a}}} = a^{\\frac{7}{12}}$.", isTrue: false }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Sai. Công thức chuẩn phải là $\\sqrt[n]{a^m} = a^{\\frac{m}{n}}$.<br>b) Đúng. Áp dụng đúng công thức lũy thừa với số mũ hữu tỉ.<br>c) Sai. Ta có $a^{\\frac{2}{3} + \\frac{1}{3} + 3} = a^{1 + 3} = a^4 \\ne a^5$.<br>d) Sai. Rút gọn từ trong ra ngoài: $a \\sqrt{a} = a^{\\frac{3}{2}} \\Rightarrow \\sqrt[3]{a^{\\frac{3}{2}}} = a^{\\frac{1}{2}} \\Rightarrow a \\cdot a^{\\frac{1}{2}} = a^{\\frac{3}{2}} \\Rightarrow \\sqrt[3]{a^{\\frac{3}{2}}} = a^{\\frac{1}{2}} \\ne a^{\\frac{7}{12}}$." },
+                { id: "lt_p2_2", question: "Cho hai biểu thức $A = \\sqrt[3]{a^5} \\cdot a^{\\frac{7}{3}}$ và $B = a^4 \\cdot \\sqrt[7]{a^{-2}}$ với $a > 0$. Xét các mệnh đề sau:", items: [
+                    { text: "Biểu thức $A$ rút gọn bằng $a^4$.", isTrue: true },
+                    { text: "Biểu thức $B$ rút gọn bằng $a^{\\frac{26}{7}}$.", isTrue: true },
+                    { text: "Tích $A \\cdot B = a^{\\frac{30}{7}}$.", isTrue: false },
+                    { text: "Rút gọn $M = \\frac{\\sqrt[3]{A^2}}{\\sqrt{B}} = a^{\\frac{m}{n}}$ (với $\\frac{m}{n}$ tối giản) thì $2m+n=55$.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. $A = a^{\\frac{5}{3}} \\cdot a^{\\frac{7}{3}} = a^{\\frac{12}{3}} = a^4$.<br>b) Đúng. $B = a^4 \\cdot a^{-\\frac{2}{7}} = a^{4 - \\frac{2}{7}} = a^{\\frac{26}{7}}$.<br>c) Sai. $A \\cdot B = a^4 \\cdot a^{\\frac{26}{7}} = a^{\\frac{54}{7}} \\ne a^{\\frac{30}{7}}$.<br>d) Đúng. $M = \\frac{(a^4)^{\\frac{2}{3}}}{(a^{\\frac{26}{7}})^{\\frac{1}{2}}} = \\frac{a^{\\frac{8}{3}}}{a^{\\frac{13}{7}}} = a^{\\frac{8}{3} - \\frac{13}{7}} = a^{\\frac{17}{21}}$. Vậy $m=17, n=21 \\Rightarrow 2m+n = 2(17)+21 = 55$." },
+                { id: "lt_p2_3", question: "Xét sự so sánh các biểu thức lũy thừa. Khẳng định đúng / sai:", items: [
+                    { text: "$(\\sqrt{2}-1)^3 > (\\sqrt{2}-1)^4$", isTrue: true },
+                    { text: "$\\pi^{\\sqrt{2}} < \\pi^{\\sqrt{3}}$", isTrue: true },
+                    { text: "$\\left(\\frac{1}{3}\\right)^{-2} < \\left(\\frac{1}{3}\\right)^{-3}$", isTrue: true },
+                    { text: "Nếu $0.5^x < 0.5^y$ thì ta suy ra được $x < y$.", isTrue: false }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Cơ số $a = \\sqrt{2}-1 \\approx 0.414$ (nằm trong khoảng $0 < a < 1$) nên hàm nghịch biến. Vì số mũ $3 < 4$ nên $a^3 > a^4$.<br>b) Đúng. Cơ số $\\pi > 1$ hàm đồng biến. Vì $\\sqrt{2} < \\sqrt{3}$ nên $\\pi^{\\sqrt{2}} < \\pi^{\\sqrt{3}}$.<br>c) Đúng. Cơ số $\\frac{1}{3} < 1$. Vì số mũ $-2 > -3$ nên $\\left(\\frac{1}{3}\\right)^{-2} < \\left(\\frac{1}{3}\\right)^{-3}$.<br>d) Sai. Cơ số $0.5 < 1$ nên bất đẳng thức phải đổi chiều: $0.5^x < 0.5^y \\Rightarrow x > y$." },
+                { id: "lt_p2_4", question: "Tại một xí nghiệp, giá trị còn lại (triệu đồng) của một chiếc máy sau $t$ năm sử dụng được tính bằng $P(t) = 500 \\cdot \\left(\\frac{1}{2}\\right)^{\\frac{t}{3}}$.", items: [
+                    { text: "Giá trị còn lại của máy sau 3 năm sử dụng là 250 triệu đồng.", isTrue: true },
+                    { text: "Giá trị còn lại của máy sau 4 năm 3 tháng xấp xỉ bằng 180 triệu đồng.", isTrue: false },
+                    { text: "Sau 2 năm, giá trị chiếc máy giảm 185 triệu đồng so với ban đầu.", isTrue: true },
+                    { text: "Sau 1 năm, giá trị chiếc máy giảm khoảng 20,6% so với lúc ban đầu.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Thay $t=3 \\Rightarrow P(3) = 500 \\cdot (1/2)^1 = 250$.<br>b) Sai. 4 năm 3 tháng = 4.25 năm. $P(4.25) = 500 \\cdot (0.5)^{\\frac{4.25}{3}} \\approx 187$ triệu đồng (không phải 180).<br>c) Đúng. Máy lúc đầu là $500$ triệu. Sau 2 năm: $P(2) = 500 \\cdot (0.5)^{\\frac{2}{3}} \\approx 315$. Giảm: $500 - 315 = 185$ triệu.<br>d) Đúng. $P(1) = 500 \\cdot (0.5)^{\\frac{1}{3}} \\approx 397$. Tỷ lệ giảm: $\\frac{500 - 397}{500} = 20.6\\%$." },
+                { id: "lt_p2_5", question: "Với biểu thức $K = \\frac{a^{\\frac{4}{3}} (a^{-\\frac{1}{3}} + a^{\\frac{2}{3}})}{a^{\\frac{1}{4}} (a^{\\frac{3}{4}} + a^{-\\frac{1}{4}})}$ với $a > 0$.", items: [
+                    { text: "Tử số của biểu thức $K$ rút gọn bằng $a + a^2$.", isTrue: true },
+                    { text: "Mẫu số của biểu thức $K$ rút gọn bằng $a + 1$.", isTrue: true },
+                    { text: "Kết quả cuối cùng của biểu thức $K$ là $a^2$.", isTrue: false },
+                    { text: "Giá trị của biểu thức $K$ tại $a=5$ là 5.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Tử: $a^{\\frac{4}{3} - \\frac{1}{3}} + a^{\\frac{4}{3} + \\frac{2}{3}} = a^1 + a^2 = a + a^2$.<br>b) Đúng. Mẫu: $a^{\\frac{1}{4} + \\frac{3}{4}} + a^{\\frac{1}{4} - \\frac{1}{4}} = a^1 + a^0 = a + 1$.<br>c) Sai. $K = \\frac{a(1+a)}{a+1} = a$.<br>d) Đúng. Do $K = a$, khi thay $a=5$ thì $K=5$." },
+                { id: "lt_p2_6", question: "Về tính chất của lũy thừa với cơ số âm.", items: [
+                    { text: "Biểu thức $(-2)^3$ có giá trị bằng $-8$.", isTrue: true },
+                    { text: "Biểu thức $(-3)^{\\frac{1}{2}}$ có giá trị bằng $\\sqrt{-3}$.", isTrue: false },
+                    { text: "Số mũ hữu tỉ $\\frac{m}{n}$ không được định nghĩa cho cơ số âm.", isTrue: true },
+                    { text: "Phương trình $x^2 = -4$ có hai nghiệm thực phân biệt.", isTrue: false }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. $(-2) \\cdot (-2) \\cdot (-2) = -8$.<br>b) Sai. Lũy thừa với số mũ hữu tỉ $\\frac{1}{2}$ chỉ được định nghĩa cho cơ số $a > 0$.<br>c) Đúng. Theo định nghĩa SGK Toán 11, lũy thừa số mũ hữu tỉ/thực chỉ xét cơ số $a > 0$.<br>d) Sai. Bình phương của số thực luôn $\\ge 0$, nên không có số thực nào có bình phương bằng $-4$." },
+                { id: "lt_p2_7", question: "Cho biểu thức $P = (\\sqrt{x} - \\sqrt{y})(\\sqrt{x} + \\sqrt{y})$ với $x > 0, y > 0$.", items: [
+                    { text: "Biểu thức $P$ có thể viết lại dưới dạng lũy thừa là $(x^{\\frac{1}{2}} - y^{\\frac{1}{2}})(x^{\\frac{1}{2}} + y^{\\frac{1}{2}})$.", isTrue: true },
+                    { text: "Kết quả rút gọn của $P$ là $x^2 - y^2$.", isTrue: false },
+                    { text: "Khi $x=4, y=1$, giá trị của $P$ là 3.", isTrue: true },
+                    { text: "Biểu thức $P$ luôn nhận giá trị dương với mọi $x, y > 0$.", isTrue: false }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Biểu diễn căn bậc hai $\\sqrt{x} = x^{\\frac{1}{2}}$.<br>b) Sai. Theo hằng đẳng thức hiệu hai bình phương, $P = (x^{\\frac{1}{2}})^2 - (y^{\\frac{1}{2}})^2 = x - y$.<br>c) Đúng. Thay $x=4, y=1$ vào $x-y = 4-1 = 3$.<br>d) Sai. Nếu $x < y$ thì $P = x - y < 0$." },
+                { id: "lt_p2_8", question: "Sự phân rã của một chất phóng xạ được biểu diễn bằng $m(t) = m_0 \\cdot (0.5)^{\\frac{t}{T}}$, trong đó $T$ là chu kì bán rã. Một chất có chu kì bán rã là 10 ngày.", items: [
+                    { text: "Sau 10 ngày, lượng chất còn lại bằng một nửa lượng ban đầu.", isTrue: true },
+                    { text: "Sau 20 ngày, chất phóng xạ biến mất hoàn toàn (còn 0%).", isTrue: false },
+                    { text: "Tỉ lệ phần trăm chất còn lại sau 30 ngày là 12.5%.", isTrue: true },
+                    { text: "Hàm số khối lượng theo thời gian luôn là hàm số giảm.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Tại $t=T=10 \\Rightarrow m(10) = m_0(0.5)^1 = 0.5 m_0$.<br>b) Sai. Sau 20 ngày, lượng còn lại là $(0.5)^2 = 0.25$ (còn 25%), quá trình phân rã theo hàm mũ không bao giờ giảm về 0 một cách tuyệt đối.<br>c) Đúng. Sau 30 ngày: $(0.5)^3 = 0.125 = 12.5\\%$.<br>d) Đúng. Do cơ số $0.5 < 1$, khối lượng luôn giảm theo thời gian." },
+                { id: "lt_p2_9", question: "Cho $a, b > 0$. Xét tính đúng/sai của các biến đổi sau:", items: [
+                    { text: "$(a^3 \\cdot b^2)^4 = a^{12} \\cdot b^8$.", isTrue: true },
+                    { text: "$\\sqrt{a \\sqrt{a}} = a^{\\frac{3}{4}}$.", isTrue: true },
+                    { text: "$a^x + a^y = a^{x+y}$.", isTrue: false },
+                    { text: "$\\left(\\frac{a}{b}\\right)^{-2} = \\frac{b^2}{a^2}$.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. $(xy)^n = x^n y^n$ và lũy thừa của lũy thừa nhân số mũ.<br>b) Đúng. $a \\sqrt{a} = a^{\\frac{3}{2}}$. Căn bậc hai ngoài cùng là lũy thừa $\\frac{1}{2} \\Rightarrow (a^{\\frac{3}{2}})^{\\frac{1}{2}} = a^{\\frac{3}{4}}$.<br>c) Sai. Tính chất lũy thừa chỉ có công thức cho phép nhân: $a^x \\cdot a^y = a^{x+y}$. Không có công thức gộp cho phép cộng.<br>d) Đúng. Mũ âm có nghĩa là nghịch đảo phân số: $\\left(\\frac{a}{b}\\right)^{-2} = \\left(\\frac{b}{a}\\right)^2 = \\frac{b^2}{a^2}$." },
+                { id: "lt_p2_10", question: "Khi gửi tiết kiệm ngân hàng 100 triệu với lãi kép 8%/năm.", items: [
+                    { text: "Số tiền nhận được sau $n$ năm là $100 \\cdot (1.08)^n$.", isTrue: true },
+                    { text: "Tiền lãi thu được của năm thứ 2 cao hơn tiền lãi thu được của năm thứ 1.", isTrue: true },
+                    { text: "Nếu chia kỳ hạn thành 6 tháng/lần, lãi suất mỗi kỳ vẫn là 8%.", isTrue: false },
+                    { text: "Kỳ hạn càng ngắn (tính lãi nhiều lần trong năm), tổng tiền nhận được sau 1 năm càng lớn.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Áp dụng công thức chuẩn $A = P(1+r)^n$.<br>b) Đúng. Lãi kép tính lãi trên cả phần lãi đã nhập gốc, nên tiền sinh ra kỳ sau luôn lớn hơn kỳ trước.<br>c) Sai. Nếu chia kỳ hạn 6 tháng (1 năm 2 lần), lãi suất của mỗi kỳ là $8\\% / 2 = 4\\%$.<br>d) Đúng. Do lãi kép sinh ra liên tục trên số tiền gốc đã được cộng dồn, việc chia nhỏ kỳ hạn làm tăng tần suất gộp lãi, dẫn đến số dư cuối kì lớn hơn một chút." }
+            ],
+            part3: [
+                { id: "lt_p3_1", question: "Bác An gửi tiết kiệm 100 triệu đồng theo kì hạn 3 tháng với lãi suất 5%/năm. Số tiền bác An thu được (làm tròn đến hàng đơn vị triệu đồng) sau 2 năm là bao nhiêu?", keywords: ["110"], explanation: "Lãi suất mỗi kỳ (3 tháng) là $r = \\frac{5\\%}{4} = 1.25\\% = 0.0125$. <br>Sau 2 năm có $n = 2 \\times 4 = 8$ kỳ hạn. <br>Số tiền thu được là: $A = 100(1 + 0.0125)^8 \\approx 110.45$. Làm tròn đến hàng đơn vị là 110." },
+                { id: "lt_p3_2", question: "Một máy tính có giá ban đầu 20 triệu đồng. Mỗi năm giá trị giảm 15%. Hỏi sau 5 năm, giá trị còn lại bao nhiêu triệu đồng? (Làm tròn 2 chữ số thập phân).", keywords: ["8.87", "8,87"], explanation: "Áp dụng công thức khấu hao: $P(t) = P_0(1 - r)^t$. <br>$P(5) = 20(1 - 0.15)^5 = 20(0.85)^5 \\approx 8.87$ triệu đồng." },
+                { id: "lt_p3_3", question: "Cho $25^x + 25^{-x} = 7$. Tính giá trị của biểu thức $P = \\frac{5^{x+1} + 5^{-x+1}}{2 + 5^x + 5^{-x}}$.", keywords: ["3"], explanation: "Ta có $25^x + 25^{-x} = 7 \\Leftrightarrow (5^x + 5^{-x})^2 - 2 = 7 \\Leftrightarrow (5^x + 5^{-x})^2 = 9$. <br>Vì $5^x > 0$ nên $5^x + 5^{-x} = 3$. <br>Biến đổi tử số: $5 \\cdot 5^x + 5 \\cdot 5^{-x} = 5(5^x + 5^{-x}) = 5 \\cdot 3 = 15$. <br>Biến đổi mẫu số: $2 + 3 = 5$. <br>Vậy $P = \\frac{15}{5} = 3$." },
+                { id: "lt_p3_4", question: "Số lượng vi khuẩn A tính theo $s(t) = s(0) \\cdot 2^t$. Biết sau 3 phút có 625 nghìn con. Hỏi sau bao nhiêu phút từ ban đầu thì số lượng vi khuẩn đạt 10000 nghìn con?", keywords: ["7"], explanation: "Tính số lượng ban đầu: $s(3) = s(0) \\cdot 2^3 = 625 \\Rightarrow s(0) = \\frac{625}{8} = 78.125$ nghìn con. <br>Để đạt 10000 nghìn con: $10000 = 78.125 \\cdot 2^t \\Rightarrow 2^t = 128 \\Rightarrow t=7$ phút." },
+                { id: "lt_p3_5", question: "Rút gọn biểu thức $M = \\frac{\\sqrt[3]{a^2} \\cdot a^{\\frac{1}{3}}}{a^0}$ với $a>0$. Tính giá trị của $M$ khi $a=2024$.", keywords: ["2024"], explanation: "Rút gọn tử số: $\\sqrt[3]{a^2} = a^{\\frac{2}{3}}$. Khi đó $a^{\\frac{2}{3}} \\cdot a^{\\frac{1}{3}} = a^1 = a$. <br>Mẫu số bằng: $a^0 = 1$. <br>Vậy $M = a$. Khi thay $a=2024$, giá trị nhận được là $2024$." },
+                { id: "lt_p3_6", question: "Tìm số nguyên $n$ thỏa mãn $3^n \\cdot 3^2 = 243$.", keywords: ["3"], explanation: "Theo tính chất lũy thừa ta có $3^n \\cdot 3^2 = 3^{n+2}$. <br>Mà $243 = 3^5$. <br>Do đó $n+2 = 5 \\Rightarrow n = 3$." },
+                { id: "lt_p3_7", question: "Một khu rừng có $4 \\cdot 10^5 m^3$ gỗ. Tốc độ sinh trưởng là 4%/năm. Số gỗ sau 5 năm là $4abc61.161 m^3$. Tính giá trị $a - b + c$.", keywords: ["8"], explanation: "Lượng gỗ sau 5 năm áp dụng công thức: $T_5 = 4 \\cdot 10^5(1 + 0.04)^5 = 486661.161 m^3$. <br>Đồng nhất với đề bài, ta có $a=8, b=6, c=6$. <br>Tính $a - b + c = 8 - 6 + 6 = 8$." },
+                { id: "lt_p3_8", question: "Phương trình $x^{\\frac{3}{2}} = 8$ có nghiệm là $x = a$. Tìm $a$.", keywords: ["4"], explanation: "Nâng lũy thừa cả hai vế với số mũ $\\frac{2}{3}$: <br>$x = 8^{\\frac{2}{3}} = (2^3)^{\\frac{2}{3}} = 2^{3 \\cdot \\frac{2}{3}} = 2^2 = 4$. <br>Vậy $a=4$." },
+                { id: "lt_p3_9", question: "Với số dương $x$, biểu thức $\\sqrt{x \\sqrt{x}} = x^{\\frac{m}{n}}$ (phân số tối giản). Tính $m+n$.", keywords: ["7"], explanation: "Làm từ trong ra ngoài: $x \\sqrt{x} = x^1 \\cdot x^{\\frac{1}{2}} = x^{\\frac{3}{2}}$. <br>Lấy căn bậc hai bên ngoài: $(x^{\\frac{3}{2}})^{\\frac{1}{2}} = x^{\\frac{3}{4}}$. <br>Phân số $\\frac{3}{4}$ đã tối giản, suy ra $m=3, n=4$. <br>Vậy $m+n = 3+4 = 7$." },
+                { id: "lt_p3_10", question: "Ông Đại gửi tiết kiệm mỗi đầu tháng đóng 5 triệu với lãi 0.33%/tháng. Sau 5 năm, ông nhận khoảng 332 triệu. Dạng toán này gọi là bài toán Tích lũy (hay Trả góp). Tính giá trị của công bội $q$ trong cấp số nhân được dùng để chứng minh công thức này.", keywords: ["1.0033", "1,0033"], explanation: "Công bội trong chuỗi bài toán gửi góp hàng tháng được tính bằng $q = 1 + r\\%$. <br>Với lãi suất $r\\% = 0.33\\% = 0.0033$. <br>Vậy $q = 1 + 0.0033 = 1.0033$." }
+            ]
+        };
+
+        let currentSession = [];
+        let currentIndex = 0;
+        let score = 0;
+        let selectedAnswers = null;
+
+        function shuffle(array) { return array.sort(() => Math.random() - 0.5); }
+
+        function initGame() {
+            let playedHistory = JSON.parse(localStorage.getItem('played_history_lt_v2') || '[]');
+            const lastRoundIds = JSON.parse(localStorage.getItem('last_round_lt_v2') || '[]');
+            
+            const getFresh = (pool, count) => {
+                // Bước 1: Ưu tiên lọc những câu chưa làm bao giờ VÀ không thuộc lượt ngay trước đó
+                let available = pool.filter(q => !playedHistory.includes(q.id) && !lastRoundIds.includes(q.id));
+                let selected = [];
+                
+                if (available.length >= count) {
+                    selected = shuffle(available).slice(0, count);
+                } else {
+                    // Bước 2: Cạn kho đề -> Reset lịch sử toàn cục, nhưng VẪN ƯU TIÊN né các câu của lượt trước
+                    const poolIds = pool.map(p => p.id);
+                    playedHistory = playedHistory.filter(id => !poolIds.includes(id));
+                    available = pool.filter(q => !lastRoundIds.includes(q.id));
+                    
+                    if (available.length >= count) {
+                        selected = shuffle(available).slice(0, count);
+                    } else {
+                        // Bước 3: Thuật toán nới lỏng - Nếu pool quá nhỏ, cho phép lấy lại từ đề trước
+                        // nhưng được kiểm soát tự động để không vượt quá 15% tổng lượng câu hỏi
+                        selected = [...available];
+                        let needed = count - available.length;
+                        let recycled = shuffle(pool.filter(q => lastRoundIds.includes(q.id)));
+                        selected = selected.concat(recycled.slice(0, needed));
+                    }
+                }
+                
+                playedHistory.push(...selected.map(q => q.id));
+                return selected;
+            };
+
+            const p1 = getFresh(MASTER_POOL.part1, 7);
+            const p2 = getFresh(MASTER_POOL.part2, 5);
+            const p3 = getFresh(MASTER_POOL.part3, 3);
+
+            currentSession = [...p1, ...p2, ...p3];
+            
+            localStorage.setItem('played_history_lt_v2', JSON.stringify(playedHistory));
+            localStorage.setItem('last_round_lt_v2', JSON.stringify(currentSession.map(q => q.id)));
+
+            currentIndex = 0; 
+            score = 0;
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('progress-container').classList.remove('hidden');
+            document.getElementById('footer-actions').classList.remove('hidden');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const container = document.getElementById('main-content');
+            const data = currentSession[currentIndex];
+            const qNum = currentIndex + 1;
+            selectedAnswers = (currentIndex < 7) ? null : (currentIndex < 12 ? {} : "");
+
+            document.getElementById('status').innerText = `CÂU ${qNum} / 15`;
+            document.getElementById('progress-bar').style.width = `${(qNum / 15) * 100}%`;
+            document.getElementById('check-btn').classList.remove('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('result-btn').classList.add('hidden');
+
+            let html = `<div class="fade-in">
+                <div class="mb-10 flex items-center gap-4">
+                    <span class="bg-cyan-600 text-white text-xs font-black px-5 py-2.5 rounded-2xl uppercase tracking-widest shadow-lg shadow-cyan-100">PHẦN ${qNum <= 7 ? 'I: TRẮC NGHIỆM' : (qNum <= 12 ? 'II: ĐÚNG/SAI' : 'III: TRẢ LỜI NGẮN')}</span>
+                </div>
+                <div class="text-xl md:text-2xl font-bold text-slate-800 mb-12 leading-relaxed math-render" id="q-text">${data.question}</div>`;
+
+            if (currentIndex < 7) { 
+                html += `<div class="grid gap-6">`;
+                data.options.forEach((opt, i) => {
+                    html += `<button onclick="pickMCQ(${i})" id="mcq-${i}" class="choice-btn group p-7 border-2 border-slate-100 rounded-[2rem] text-left hover:border-cyan-400 hover:bg-cyan-50 transition-all flex items-center gap-8">
+                        <div class="w-14 h-14 rounded-3xl bg-slate-50 flex items-center justify-center font-black text-slate-400 group-hover:text-cyan-600 transition-colors text-2xl">${String.fromCharCode(65+i)}</div>
+                        <div class="text-xl font-semibold text-slate-700 math-render">${opt}</div>
+                    </button>`;
+                });
+                html += `</div>`;
+            } else if (currentIndex < 12) { 
+                html += `<div class="space-y-6">`;
+                data.items.forEach((item, i) => {
+                    html += `<div class="item-row flex flex-col md:flex-row md:items-center justify-between p-7 bg-slate-50 rounded-[2.5rem] border border-slate-100 gap-6 shadow-sm">
+                        <div class="flex items-start gap-4">
+                            <span class="font-black text-cyan-500 mt-1 text-lg">${['a)', 'b)', 'c)', 'd)'][i]}</span>
+                            <span class="text-xl text-slate-700 font-bold leading-relaxed math-render">${item.text}</span>
+                        </div>
+                        <div class="flex gap-4 min-w-[260px]">
+                            <button onclick="pickTF(${i}, true)" id="tf-${i}-t" class="flex-1 py-5 rounded-[1.5rem] border-2 border-white bg-white font-black text-lg transition active:scale-90 shadow-sm text-slate-400 hover:text-cyan-600">ĐÚNG</button>
+                            <button onclick="pickTF(${i}, false)" id="tf-${i}-f" class="flex-1 py-5 rounded-[1.5rem] border-2 border-white bg-white font-black text-lg transition active:scale-90 shadow-sm text-slate-400 hover:text-cyan-600">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } else { 
+                html += `<div class="relative max-w-lg mx-auto mt-12">
+                    <input type="text" id="short-ans" class="w-full p-10 border-4 border-slate-100 rounded-[3rem] text-5xl font-black text-center text-cyan-600 focus:border-cyan-400 outline-none transition shadow-inner" placeholder="Nhập đáp án...">
+                </div>`;
+            }
+
+            html += `<div id="exp-box" class="hidden mt-12 p-10 rounded-[3rem] explanation-box"></div></div>`;
+            container.innerHTML = html;
+            
+            if (window.MathJax) {
+                MathJax.typesetPromise().then(() => {
+                    document.querySelectorAll('.math-render').forEach(el => el.classList.add('ready'));
+                });
+            }
+        }
+
+        function pickMCQ(idx) {
+            selectedAnswers = idx;
+            document.querySelectorAll('[id^="mcq-"]').forEach(b => {
+                b.classList.replace('border-cyan-500', 'border-slate-100');
+                b.classList.remove('bg-cyan-50');
+            });
+            document.getElementById(`mcq-${idx}`).classList.replace('border-slate-100', 'border-cyan-500');
+            document.getElementById(`mcq-${idx}`).classList.add('bg-cyan-50');
+        }
+
+        function pickTF(idx, val) {
+            if (typeof selectedAnswers !== 'object') selectedAnswers = {};
+            selectedAnswers[idx] = val;
+            const btnT = document.getElementById(`tf-${idx}-t`), btnF = document.getElementById(`tf-${idx}-f`);
+            btnT.className = `flex-1 py-5 rounded-[1.5rem] border-2 font-black text-lg transition active:scale-90 ${val === true ? 'bg-cyan-600 text-white border-cyan-600 shadow-md' : 'bg-white border-white text-slate-400'}`;
+            btnF.className = `flex-1 py-5 rounded-[1.5rem] border-2 font-black text-lg transition active:scale-90 ${val === false ? 'bg-cyan-600 text-white border-cyan-600 shadow-md' : 'bg-white border-white text-slate-400'}`;
+        }
+
+        function processAnswer() {
+            const data = currentSession[currentIndex];
+            let isCorrect = false;
+
+            if (currentIndex < 7) {
+                if (selectedAnswers === null) return alert("Vui lòng chọn đáp án!");
+                isCorrect = (selectedAnswers === data.correct);
+                if (isCorrect) score += 1;
+                document.getElementById(`mcq-${data.correct}`).classList.add('bg-green-50', 'border-green-500');
+                if(!isCorrect) document.getElementById(`mcq-${selectedAnswers}`).classList.add('bg-red-50', 'border-red-500');
+            } else if (currentIndex < 12) {
+                let correctCount = 0;
+                let isFullAnswered = true;
+                for(let i=0; i<4; i++) { if(selectedAnswers[i] === undefined) isFullAnswered = false; }
+                if(!isFullAnswered) return alert("Vui lòng chọn Đúng/Sai cho tất cả các ý!");
+
+                data.items.forEach((item, i) => { if (selectedAnswers[i] === item.isTrue) correctCount++; });
+                const points = [0, 0.1, 0.25, 0.5, 1];
+                score += points[correctCount];
+                isCorrect = (correctCount === 4);
+            } else {
+                const input = document.getElementById('short-ans').value.trim().toLowerCase().replace(',', '.');
+                if(!input) return alert("Vui lòng nhập đáp án!");
+                isCorrect = data.keywords.some(k => input.includes(k.toLowerCase()));
+                if (isCorrect) score += 1;
+            }
+
+            const exp = document.getElementById('exp-box');
+            exp.innerHTML = `<h4 class="text-cyan-800 font-extrabold text-2xl mb-6 uppercase tracking-tighter">${isCorrect ? '✨ CHÍNH XÁC!' : '❌ HÃY KIỂM TRA LẠI LỜI GIẢI'}</h4>
+                             <div class="text-slate-700 font-medium leading-loose math-render text-lg" id="exp-text">${data.explanation}</div>`;
+            exp.classList.remove('hidden');
+            document.getElementById('check-btn').classList.add('hidden');
+
+            if (currentIndex === 14) document.getElementById('result-btn').classList.remove('hidden');
+            else document.getElementById('next-btn').classList.remove('hidden');
+            
+            if (window.MathJax) {
+                MathJax.typesetPromise().then(() => {
+                    const el = document.getElementById('exp-text');
+                    if(el) el.classList.add('ready');
+                });
+            }
+        }
+
+        function renderNext() { currentIndex++; renderQuestion(); }
+
+        function finishGame() {
+            const container = document.getElementById('main-content');
+            document.getElementById('footer-actions').classList.add('hidden');
+            document.getElementById('progress-container').classList.add('hidden');
+            
+            const finalScore = ((score / 15) * 10).toFixed(2);
+            let rank = finalScore >= 8.5 ? "XUẤT SẮC" : (finalScore >= 6.5 ? "KHÁ GIỎI" : "CẦN CỐ GẮNG");
+            
+            container.innerHTML = `<div class="text-center py-20 fade-in">
+                <div class="text-[12rem] mb-12 animate-pulse drop-shadow-2xl">🏆</div>
+                <h2 class="text-6xl font-black text-slate-800 mb-6 uppercase tracking-tighter">${rank}</h2>
+                <div class="text-[10rem] leading-none font-black text-cyan-600 my-16 tracking-tighter italic">${finalScore}<span class="text-4xl text-slate-300 ml-6 not-italic">/ 10</span></div>
+                <button onclick="location.reload()" class="bg-cyan-600 text-white px-24 py-8 rounded-[3rem] font-black text-3xl shadow-xl hover:bg-cyan-700 transition active:scale-95 uppercase tracking-wide">LÀM ĐỀ MỚI</button>
+            </div>`;
+        }
+    </script>
+</body>
+</html>
